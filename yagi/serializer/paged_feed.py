@@ -90,10 +90,10 @@ class PagedFeed(feedgenerator.Atom1Feed):
 class CufPagedFeed(feedgenerator.Atom1Feed):
 
     # Get it to care about content elements
-    def write_item(self, handler, item, root=False):
+    def write_item(self, handler, item, root=False, title="Server"):
         handler.startElement(u"atom:entry",
                              self.root_attributes() if root else {})
-        handler.addQuickElement(u"atom:title", "Server")
+        handler.addQuickElement(u"atom:title", title)
         handler.addQuickElement(u"atom:content",
                                 item['contents'],
                                 dict(type="application/xml"))
