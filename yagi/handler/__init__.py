@@ -42,9 +42,11 @@ class BaseHandler(object):
         return messages
 
     def __call__(self, messages, env=None):
+        print "!!!!!!!!!!"
         if env is None:
             env = dict()
         if self.app:
+            print "!!"
             self.app(messages, env=env)
         filtered_messages = self.filter_message(messages)
         self.handle_messages(filtered_messages, env=env)

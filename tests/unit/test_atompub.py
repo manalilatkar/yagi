@@ -2,6 +2,7 @@ import functools
 import unittest
 
 import httplib2
+import mox
 import stubout
 
 import yagi.config
@@ -27,48 +28,24 @@ class AtomPubTests(unittest.TestCase):
     """Tests to ensure the ATOM Pub code holds together as expected"""
 
     def setUp(self):
+        self.mox = mox.Mox()
         self.stubs = stubout.StubOutForTesting()
-        config_dict = {
-            'atompub': {
-                'url': 'http://127.0.0.1:9000/test/%(event_type)s',
-                'user': 'user',
-                'key': 'key',
-                'interval': 30,
-                'max_wait': 600,
-                'retries': 1,
-                'failures_before_reauth': 5
-            },
-            'event_feed': {
-                'feed_title': 'feed_title',
-                'feed_host': 'feed_host',
-                'use_https': False,
-                'port': 'port'
-            },
-            'handler_auth': {
-                'method': 'no_auth'
-            }
-        }
 
         self.handler = AtomPub()
-
-        def get(*args, **kwargs):
-            val = None
-            for arg in args:
-                if val:
-                    val = val.get(arg)
-                else:
-                    val = config_dict.get(arg)
-                    if not val:
-                        return None or kwargs.get('default')
-            return val
-
-        def config_with(*args):
-            return functools.partial(get, args)
-
-        self.stubs.Set(yagi.config, 'config_with', config_with)
-        self.stubs.Set(yagi.config, 'get', get)
+        self.mox.StubOutWithMock(self.handler, 'config_get')
+        self.handler.config_get('retries').AndReturn(1)
+        self.handler.config_get('interval').AndReturn(30)
+        self.handler.config_get('max_wait').AndReturn(600)
+        self.handler.config_get('generate_entity_links').AndReturn(False)
+        self.handler.config_get('failures_before_reauth').AndReturn(5)
+        self.handler.config_get('validate_ssl').AndReturn(False)
+        self.handler.config_get('url').AndReturn(
+            'http://127.0.0.1:9000/test/%(event_type)s')
+        self.handler.config_get('stacktach_down').AndReturn(True)
+        self.mox.ReplayAll()
 
     def tearDown(self):
+        self.mox.UnsetStubs()
         self.stubs.UnsetAll()
 
     def test_notify(self):
@@ -98,4 +75,29 @@ class AtomPubTests(unittest.TestCase):
 
         self.stubs.Set(httplib2.Http, 'request', mock_request)
         self.handler.handle_messages(messages, dict())
+        self.assertEqual(self.called, True)
+
+    def test_change_exists_event_to_verified_when_stacktach_down(self):
+        payload = {'event_type': 'compute.instance.exists', 'message_id': 1,
+                   'content': dict(a=3)}
+        messages = [MockMessage(payload)]
+        self.called = False
+
+        def mock_request(*args, **kwargs):
+            self.called = True
+            return MockResponse(404), None
+
+        self.mox.StubOutWithMock(self.handler, 'config_get')
+        self.handler.config_get('stacktach_down').AndReturn(True)
+        self.mox.StubOutWithMock(yagi.serializer.atom, 'dump_item')
+        expected_entity = {
+                    'event_type': 'compute.instance.exists.verified',
+                    'message_id': 1,
+                    'content': payload}
+
+        yagi.serializer.atom.dump_item(expected_entity, entity_links=False)
+        self.mox.ReplayAll()
+        self.stubs.Set(httplib2.Http, 'request', mock_request)
+        self.handler.handle_messages(messages, dict())
+        self.mox.VerifyAll()
         self.assertEqual(self.called, True)
