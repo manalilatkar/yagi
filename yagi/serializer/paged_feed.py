@@ -87,6 +87,13 @@ class PagedFeed(feedgenerator.Atom1Feed):
                                      u"href": self.feed['previous_page_url']})
 
 
+def _get_feed(title):
+    if title == "Server":
+        return "nova"
+    if title == "Glance":
+        return "glance"
+
+
 class CufPagedFeed(feedgenerator.Atom1Feed):
 
     def root_attributes_for_cuf(self, title):
@@ -102,7 +109,8 @@ class CufPagedFeed(feedgenerator.Atom1Feed):
 
     # Get it to care about content elements
     def write_item(self, handler, item, root=False, title="Server"):
-        handler.processingInstruction("atom", 'feed="glance/events"')
+        feed = _get_feed(title)
+        handler.processingInstruction(u"atom", 'feed="%s/events"' % feed)
         handler.startElement(u"atom:entry",
                              self.root_attributes_for_cuf(title) if root else {})
         for cat in item['categories']:
@@ -112,4 +120,3 @@ class CufPagedFeed(feedgenerator.Atom1Feed):
                                 item['contents'],
                                 dict(type="application/xml"))
         handler.endElement(u"atom:entry")
-        handler.endElement(u"atom")

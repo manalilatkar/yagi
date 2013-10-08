@@ -110,7 +110,7 @@ class CufPubTests(unittest.TestCase):
         )]
 
         body = ("""<?xml version="1.0" encoding="utf-8"?>\n<?atom """
-        """feed="glance/events"?><atom:entry xmlns="http://www.w3.org"""
+        """feed="nova/events"?><atom:entry xmlns="http://www.w3.org"""
         """/2005/Atom"><category term="compute.instance.exists.verified.cuf">"""
         """</category><atom:title type="text">Server</atom:title>"""
         """<atom:content type="application/xml">&lt;event xmlns="http://"""
@@ -124,7 +124,7 @@ class CufPubTests(unittest.TestCase):
         """flavor="10" isRedHat="true" isMSSQL="false" isMSSQLWeb="false" """
         """isWindows="false" isSELinux="false" isManaged="false" """
         """bandwidthIn="1001" bandwidthOut="19992"/&gt;&lt;/event&gt"""
-        """;</atom:content></atom:entry></atom>""")
+        """;</atom:content></atom:entry>""")
         self.mox.StubOutWithMock(httplib2.Http, """request""")
         httplib2.Http.request('http://127.0.0.1:9000/test/%(event_type)s',
                               'POST', body=body,
@@ -177,7 +177,7 @@ class CufPubTests(unittest.TestCase):
         """tenantId="owner1" version="1"&gt; &lt;glance:product """
         """storage="12345" serverId="inst_uuid1" serviceCode="Glance" """
         """serverName="" resourceType="snapshot" version="1"/&gt;&lt;/event&gt;&lt;/events&gt;"""
-        """</atom:content></atom:entry></atom>""")
+        """</atom:content></atom:entry>""")
 
         self.mox.StubOutWithMock(httplib2.Http, 'request')
         httplib2.Http.request('http://127.0.0.1:9000/test/%(event_type)s',
@@ -249,7 +249,7 @@ class CufPubTests(unittest.TestCase):
         """tenantId="owner1" version="1"&gt; &lt;glance:product storage="67890" """
         """serverId="inst_uuid2" serviceCode="Glance" serverName="" """
         """resourceType="snapshot" version="1"/&gt;&lt;/event&gt;&lt;/events&gt;"""
-        """</atom:content></atom:entry></atom>""")
+        """</atom:content></atom:entry>""")
 
         self.mox.StubOutWithMock(httplib2.Http, 'request')
         httplib2.Http.request('http://127.0.0.1:9000/test/%(event_type)s',
