@@ -1,5 +1,6 @@
 from unittest import TestCase
 import uuid
+import datetime
 import mox
 from tests.unit import utils
 from yagi.handler import notification_payload
@@ -95,19 +96,19 @@ class TestGlanceNotification(TestCase):
     def test_start_time_should_return_launched_at_when_launched_at_is_bigger(self):
         start_time = notification_payload.start_time('2013-09-02 16:08:10',
             '2013-09-02 00:00:00')
-        self.assertEqual(start_time, "2013-09-02 16:08:10")
+        self.assertEqual(start_time, datetime.datetime(2013, 9, 2, 16, 8, 10))
 
     def test_end_time_should_return_deleted_at_when_deleted_at_is_smaller(self):
         end_time = notification_payload.end_time(
             '2013-09-02 16:08:46',
             '2013-09-02 23:59:59.999999')
-        self.assertEqual(end_time, "2013-09-02 16:08:46")
+        self.assertEqual(end_time, datetime.datetime(2013, 9, 2, 16, 8, 46))
 
     def test_end_time_should_return_audit_period_beginning_when_deleted_at_is_none(self):
         end_time = notification_payload.end_time(
             "",
             '2013-09-02 23:59:59.999999')
-        self.assertEqual(end_time, "2013-09-02 23:59:59.999999")
+        self.assertEqual(end_time, datetime.datetime(2013, 9, 2, 23, 59, 59, 999999))
 
 class TestNovaNotification(TestCase):
 
@@ -277,7 +278,7 @@ class TestNotificationPayload(TestCase):
                      'state_description': ''
                     }
         payload = NotificationPayload(payload_json)
-        self.assertEquals(payload.start_time, '2012-09-15 11:51:11')
+        self.assertEquals(payload.start_time, datetime.datetime(2012, 9, 15, 11, 51, 11))
 
     def test_end_time_should_get_min_of_deleted_at_and_audit_period_ending(self):
         payload_json ={'tenant_id':'2882',
@@ -298,7 +299,7 @@ class TestNotificationPayload(TestCase):
                      'state_description': ''
                     }
         payload = NotificationPayload(payload_json)
-        self.assertEquals(payload.end_time, '2012-09-15 09:51:11')
+        self.assertEquals(payload.end_time, datetime.datetime(2012, 9, 15, 9, 51, 11))
 
     def test_end_time_should_be_audit_period_ending_when_deleted_at_is_empty(self):
         payload_json ={'tenant_id':'2882',
@@ -319,7 +320,7 @@ class TestNotificationPayload(TestCase):
                      'state_description': ''
                     }
         payload = NotificationPayload(payload_json)
-        self.assertEquals(payload.end_time, '2012-09-16 10:51:11')
+        self.assertEquals(payload.end_time, datetime.datetime(2012, 9, 16, 10, 51, 11))
 
     def test_different_time_formats_should_not_raise_exception(self):
         payload_json ={'tenant_id':'2882',
@@ -341,5 +342,5 @@ class TestNotificationPayload(TestCase):
                      'state_description': ''
                     }
         payload = NotificationPayload(payload_json)
-        self.assertEquals(payload.end_time, '2012-09-16 10:51:11.799674')
+        self.assertEquals(payload.end_time, datetime.datetime(2012, 9, 16, 10, 51, 11, 799674))
 

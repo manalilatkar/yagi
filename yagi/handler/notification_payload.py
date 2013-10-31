@@ -18,30 +18,31 @@ def end_time(deleted_at, audit_period_ending):
         return format_time(end_time)
 
 
-def format_time(time):
-        if 'T' in time:
-            try:
-                # Old way of doing it
-                time = datetime.datetime.strptime(time, "%Y-%m-%dT%H:%M:%S.%f")
-            except ValueError:
-                try:
-                    # Old way of doing it, no millis
-                    time = datetime.datetime.strptime(time, "%Y-%m-%dT%H:%M:%S")
-                except Exception, e:
-                    print "BAD DATE: ", e
-        else:
-            try:
-                time = datetime.datetime.strptime(time, "%Y-%m-%d %H:%M:%S.%f")
-            except ValueError:
-                try:
-                    time = datetime.datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
-                except ValueError:
-                    try:
-                        time = datetime.datetime.strptime(time, "%d %m %Y %H:%M:%S")
-                    except Exception, e:
-                        print "BAD DATE: ", e
+def format_time(when):
+    if 'Z' in when:
+        when = _try_parse(when, ["%Y-%m-%dT%H:%M:%SZ",
+                                 "%Y-%m-%dT%H:%M:%S.%fZ"])
+    elif 'T' in when:
+        when = _try_parse(when, ["%Y-%m-%dT%H:%M:%S.%f", "%Y-%m-%dT%H:%M:%S"])
+    else:
+        when = _try_parse(when, ["%Y-%m-%d %H:%M:%S.%f", "%Y-%m-%d %H:%M:%S",
+                                 "%d %m %Y %H:%M:%S"])
 
-        return str(time)
+    return when
+
+
+def _try_parse(when, formats):
+    last_exception = None
+    for date_format in formats:
+        try:
+            when = datetime.datetime.strptime(when, date_format)
+            parsed = True
+        except Exception, e:
+            parsed = False
+            last_exception = e
+        if parsed:
+            return when
+    print "Bad DATE ", last_exception
 
 
 class NotificationPayload(object):
