@@ -29,8 +29,8 @@ class CufPub(yagi.handler.BaseHandler):
     def nova_cuf(self, deployment_info, payload):
         cuf = Notification(payload). \
             convert_to_verified_message_in_cuf_format(
-            {'region': deployment_info['DATACENTER'],
-             'data_center': deployment_info['REGION']})
+            {'region': deployment_info['REGION'],
+             'data_center': deployment_info['DATACENTER']})
         entity = dict(content=cuf,
                       id=str(uuid.uuid4()),
                       event_type='compute.instance.exists.verified.cuf')
@@ -41,8 +41,8 @@ class CufPub(yagi.handler.BaseHandler):
 
         cuf = GlanceNotification(payload). \
             convert_to_verified_message_in_cuf_format(
-            {'region': deployment_info['DATACENTER'],
-             'data_center': deployment_info['REGION']})
+            {'region': deployment_info['REGION'],
+             'data_center': deployment_info['DATACENTER']})
 
         entity = dict(content=cuf,
                       id=str(uuid.uuid4()),

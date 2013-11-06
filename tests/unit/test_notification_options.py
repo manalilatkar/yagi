@@ -32,3 +32,8 @@ class TestNotificationOptions(TestCase):
         notification_options = NotificationOptions({'com.rackspace__1__options': '36'})
         options_dict = notification_options.to_cuf_options()
         self.assertEquals(options_dict, ' isWindows="true" isMSSQLWeb="true"')
+
+    def test_for_network_appliance_is_Vyatta(self):
+        notification_options = NotificationOptions({'com.rackspace__1__options': '64'})
+        options_dict = notification_options.to_cuf_options()
+        self.assertEquals(options_dict, ' appliance="VYATTA"')
