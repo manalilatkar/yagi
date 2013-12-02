@@ -43,10 +43,22 @@ class AtomPub(yagi.handler.BaseHandler):
         env[name] = results
 
     def _get_event_type(self, is_stacktach_down, payload):
+        exclude_filter_list = []
+        exclude_filters = yagi.config.get('exclude_filters', self.CONFIG_SECTION)
+        if exclude_filters:
+            exclude_filter_list = [a.strip() for a in exclude_filters.
+                                   split(",")]
         event_type = payload['event_type']
-        if event_type == 'compute.instance.exists' and is_stacktach_down:
-            event_type = 'compute.instance.exists.verified'
-        return event_type
+        send_exists_copy = False
+        if event_type == 'compute.instance.exists' and is_stacktach_down and ('compute.instance.exists.verified' not in exclude_filter_list):
+                event_type = 'compute.instance.exists.verified'
+                send_exists_copy = True
+        return event_type, send_exists_copy
+
+    def get_bool(self, bool_string):
+        if bool_string[0] in ['t', 'T']:
+            return True
+        return False
 
     def handle_messages(self, messages, env):
         retries = int(self.config_get("retries"))
@@ -54,16 +66,22 @@ class AtomPub(yagi.handler.BaseHandler):
         max_wait = int(self.config_get("max_wait"))
         entity_links = self.config_get("generate_entity_links") == "True"
         failures_before_reauth = int(self.config_get("failures_before_reauth"))
-        is_stacktach_down = self.config_get("stacktach_down")
+        is_stacktach_down = self.get_bool(self.config_get("stacktach_down"))
         connection = HttpConnection(self)
 
         for payload in self.iterate_payloads(messages, env):
             try:
-                event_type = self._get_event_type(is_stacktach_down, payload)
+                event_type, send_exists_copy = self._get_event_type(is_stacktach_down, payload)
                 entity = dict(content=payload,
                               id=payload["message_id"],
                               event_type=event_type)
                 payload_body = yagi.serializer.atom.dump_item(entity,
+                    entity_links=entity_links)
+                if send_exists_copy:
+                    entity_copy = dict(content=payload,
+                              id=payload["message_id"],
+                              event_type="compute.instance.exists")
+                    payload_body_copy = yagi.serializer.atom.dump_item(entity_copy,
                     entity_links=entity_links)
             except KeyError, e:
                 error_msg = "Malformed Notification: %s" % payload
@@ -82,6 +100,9 @@ class AtomPub(yagi.handler.BaseHandler):
                 try:
                     code = connection.send_notification(endpoint, endpoint,
                                                         payload_body)
+                    if send_exists_copy:
+                        code = connection.send_notification(endpoint, endpoint,
+                                                        payload_body_copy)
                     error = False
                     msg = ''
                     break
